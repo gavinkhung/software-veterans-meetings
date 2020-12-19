@@ -1,0 +1,4 @@
+this is two.txt
+This can only be seen in secondBranch
+
+Hi I added this piece of code from GitHub

@@ -1,0 +1,15 @@
+h1 {
+    color: red;
+    font-style: italic;
+    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    font-size: 18px;
+    text-align: center;
+}
+.blue {
+    color: blue;
+}
+#add-todo {
+    border-radius: 5px;
+    border: 1px grey solid;
+    color: green;
+}

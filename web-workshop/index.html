@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <style>
+        h1 {
+            color: green;
+            text-align: center;
+        }
+        h2 {
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>hello from h1</h1>
+        <h2>hello</h2>
+        <h3>hello</h3>
+        <h4>hello</h4>
+        <h5>hello</h5>
+        <h6>hello</h6>
+        <p>paragraph</p>
+    </div>
+
+    <a href="https://www.google.com">click here for google</a>
+
+    <img src="" alt="flower">
+
+    <script>
+        console.log("hello world");
+        
+        var h1 = document.querySelector("h1");
+        console.log(h1.textContent);
+
+        var div = document.querySelector("#container");
+
+        h1.onclick = function(){
+            console.log('h1 clicked');
+
+            var newH3 = document.createElement("h3");
+            newH3.textContent = "added new h3";
+
+            div.appendChild(newH3);
+        }
+
+    </script>
+    
+</body>
+</html>
