@@ -20,4 +20,18 @@ const arrow = () => {
 console.log(fun());
 console.log(arrow());
 
-export { fun };
+console.log(array.map(item => {
+    return item*2;
+}));
+
+const letters = ["a", "b"];
+const [letter1, letter2] = letters;
+console.log(letter1, letter2);
+console.log(...letters);
+
+const numbers = {
+    num1: "this is num1",
+    num2: "this is num2"
+}
+const {num1, num2} = numbers;
+console.log(num1, num2);
