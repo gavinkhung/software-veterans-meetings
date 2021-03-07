@@ -1,0 +1,5 @@
+GOAL: Writing code for ControlMode.Position and ControlMode.Velocity
+Motor Subsystem with different methods
+
+PID - on Talon
+Different Commands that set the values of Talons

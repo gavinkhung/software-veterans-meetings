@@ -4,23 +4,11 @@
 
 package frc.robot;
 
-import java.util.List;
-
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.controller.RamseteController;
-import edu.wpi.first.wpilibj.geometry.Pose2d;
-import edu.wpi.first.wpilibj.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.geometry.Translation2d;
-import edu.wpi.first.wpilibj.trajectory.Trajectory;
-import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
-import edu.wpi.first.wpilibj.trajectory.TrajectoryGenerator;
-import edu.wpi.first.wpilibj.util.Units;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import frc.robot.commands.ExampleCommand;
-import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.ExampleSubsystem;
+import edu.wpi.first.wpilibj2.command.Command;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -30,7 +18,6 @@ import frc.robot.subsystems.ExampleSubsystem;
  */
 public class RobotContainer {
   // The robot's subsystems and commands are defined here...
-  public static Drivetrain drivetrain = new Drivetrain();
   private final ExampleSubsystem m_exampleSubsystem = new ExampleSubsystem();
 
   private final ExampleCommand m_autoCommand = new ExampleCommand(m_exampleSubsystem);
@@ -56,27 +43,6 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // An ExampleCommand will run in autonomous
-    TrajectoryConfig config = new TrajectoryConfig(Units.feetToMeters(1), Units.feetToMeters(1));
-    config.setKinematics(drivetrain.getKinematics());
- 
-    Trajectory trajectory = TrajectoryGenerator.generateTrajectory(List.of(
-      new Pose2d(0, 0, new Rotation2d(0)),
-      new Pose2d(7.757, -3.814, new Rotation2d(0.157, 3.468))),
-      config);
-
-    // theres a pre built command that follows a trajectory
-    RamseteCommand command = new RamseteCommand(
-      trajectory,
-      drivetrain::getPose,
-      new RamseteController(2.0, 7.0),
-      drivetrain.getFeedForward(),
-      drivetrain.getKinematics(),
-      drivetrain::getSpeeds,
-      drivetrain.getLeftPIDController(),
-      drivetrain.getRightPIDController(),
-      drivetrain::setOutput,
-      drivetrain
-    );
-    return command;
+    return m_autoCommand;
   }
 }
