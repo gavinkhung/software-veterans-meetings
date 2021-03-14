@@ -15,6 +15,14 @@ package frc.robot;
 public final class Constants {
     public static class Motors {
 
+        // all necessary to create an instance of the robot simulation
+        public static double robotMass = 68.03;  // 150 pounds to Kg
+        public static double wheelRadius = 0.0762; // in meters
+        public static double trackWidth = 0.508; // in meters
+        public static double gearRatio = 10;
+        public static double rotationalInertia = 7.469;
+        public static double ticksPerRevolution = 4096;
+
         // pid on talon
         public static final double kP = 0.2;
         public static final double kI = 0.1;
@@ -22,7 +30,7 @@ public final class Constants {
 
         // used ControlMode.Position to go from meters to ticks
         public static final double wheelRadiusMeters = 0.2;
-        public static final double wheelGearRatio = 1.2;
+        public static final double wheelGearRatio = 1.0;
         public static final double motorTicksPerRevolution = 64;
 
         // setpoints

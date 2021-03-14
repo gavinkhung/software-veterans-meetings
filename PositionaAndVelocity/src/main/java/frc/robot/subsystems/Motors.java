@@ -5,35 +5,63 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.DemandType;
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.TalonSRXSimCollection;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
+import edu.wpi.first.wpilibj.simulation.BatterySim;
+import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Hardware;
-import frc.robot.Robot;
 
 public class Motors extends SubsystemBase {
 
   public static enum MotorState {
-    SETPOINT, DISABLED
+    SETPOINT, DISABLED, VELOCITY
   }
 
   private MotorState currentState;
 
+  private DifferentialDrivetrainSim drivetrainSim;
+
+  // set the encoder of the talon
+  private TalonSRXSimCollection leftMotorControllerSim;
+  private TalonSRXSimCollection rightMotorControllerSim;
+
+  // meters
   private double setpointMeters;
+
+  // rotations per minute
+  private double desiredRPM;
 
   /** Creates a new Motors. */
   public Motors() {
+    drivetrainSim = new DifferentialDrivetrainSim(Hardware.Motors.DRIVE_MOTOR, //Drive Motor ( Falcon500(2) )
+                                                   Constants.Motors.gearRatio, //Gear Ratio ( 10:1 )
+                                                   Constants.Motors.rotationalInertia, //Rotational Inertia ( 7.469 )
+                                                   Constants.Motors.robotMass, //Mass of Robot in kg
+                                                   Constants.Motors.wheelRadius, //Wheel Radius in Meters
+                                                   Constants.Motors.trackWidth, //Track Width in Meters
+                                                   null //Standard Deviations ( leave null for now )
+                                                   );
+
     Hardware.Motors.right = new WPI_TalonSRX(1);
     Hardware.Motors.left = new WPI_TalonSRX(2);
+
+    leftMotorControllerSim = Hardware.Motors.left.getSimCollection();
+    rightMotorControllerSim = Hardware.Motors.right.getSimCollection();
+
+
+    // Hardware.Motors.left.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative);
 
     Hardware.Motors.right.configFactoryDefault();
     Hardware.Motors.left.configFactoryDefault();
 
-    Hardware.Motors.right.setInverted(true);
-    Hardware.Motors.left.setInverted(false);
+    // Hardware.Motors.right.setInverted(true);
+    // Hardware.Motors.left.setInverted(false);
 
     Hardware.Motors.right.config_kP(0, Constants.Motors.kP);
     Hardware.Motors.right.config_kI(0, Constants.Motors.kI);
@@ -45,6 +73,7 @@ public class Motors extends SubsystemBase {
 
     setCurrentState(MotorState.DISABLED);
     setSetpointMeters(0);
+    setRPM(10);
   }
 
   public void setCurrentState(MotorState newState){
@@ -55,6 +84,11 @@ public class Motors extends SubsystemBase {
     setpointMeters = newSetpointMeters;
   }
 
+  public void setRPM(double newRPM){
+    desiredRPM = newRPM;
+  }
+
+  // converts a number in meters to ticks
   public int metersToTicks(double distanceMeters){
     double wheelCircumference = (2 * Math.PI * Constants.Motors.wheelRadiusMeters);
     double wheelRotations = distanceMeters / wheelCircumference;
@@ -64,13 +98,35 @@ public class Motors extends SubsystemBase {
     return ticks;
   }
 
+  // tells the motors to go to a set number of ticks
   public void moveToSetpoint(){
     int ticks = metersToTicks(setpointMeters);
+    // ControlMode.Position accepts the number of ticks to move as the parameter
     Hardware.Motors.right.set(ControlMode.Position, ticks);
     Hardware.Motors.left.set(ControlMode.Position, ticks);
+    drivetrainSim.setInputs(Hardware.Motors.left.getMotorOutputVoltage(), Hardware.Motors.right.getMotorOutputVoltage());
 
     // counter gravity
     // Hardware.Motors.right.set(ControlMode.Position, ticks, DemandType.ArbitraryFeedForward, Constants.arbitraryFeedForward);
+  }
+
+  // converts a number in RPM to ticks per 100 ms
+  public int rpmToTicksPer100MS(double rpm){
+    int ticksPer100MS = (int)(rpm / 600 * Constants.Motors.ticksPerRevolution * Constants.Motors.wheelGearRatio);
+    return ticksPer100MS;
+  }
+
+  // tells the motors to go at a specific rpm
+  public void goToVelocity(){
+    // ticks per 100 ms
+    double ticksPer100MS = rpmToTicksPer100MS(desiredRPM);
+
+    Hardware.Motors.right.set(ControlMode.Velocity, ticksPer100MS);
+    Hardware.Motors.left.set(ControlMode.Velocity, ticksPer100MS);
+
+    drivetrainSim.setInputs(Hardware.Motors.left.getMotorOutputVoltage(), Hardware.Motors.right.getMotorOutputVoltage());
+
+    System.out.println("ticksPer100MS: "+ticksPer100MS);
   }
 
   @Override
@@ -81,25 +137,55 @@ public class Motors extends SubsystemBase {
       case SETPOINT:
         moveToSetpoint();
         break;
+      case VELOCITY:
+        goToVelocity();
+        break;
       case DISABLED:
         Hardware.Motors.right.set(ControlMode.PercentOutput, 0);
         Hardware.Motors.left.set(ControlMode.PercentOutput, 0);
+        drivetrainSim.setInputs(0, 0);
         break;
     }
     log();
-
-    // if(!Robot.isReal()){
-    //   simulationPeriodic();
-    // }
   }
 
   public void simulationPeriodic(){
-    // for later
+    super.simulationPeriodic();
+
+    drivetrainSim.update(.02); // Simulates 0.02s of time. 0.02s is also how often the roborio/ these methods runs
+
+    // ticks
+    leftMotorControllerSim.setQuadratureRawPosition(metersToTicks(drivetrainSim.getLeftPositionMeters()));
+    rightMotorControllerSim.setQuadratureRawPosition(metersToTicks(drivetrainSim.getLeftPositionMeters()));
+
+    leftMotorControllerSim.setQuadratureVelocity(MPSToTicksPer100MS(drivetrainSim.getLeftVelocityMetersPerSecond()));
+    rightMotorControllerSim.setQuadratureVelocity(MPSToTicksPer100MS(drivetrainSim.getLeftVelocityMetersPerSecond()));
+
+    // ticks per 100ms
+
+    //Does some funky math to determine the current voltage of the battery based on the current pull of the drivetrain motors
+    RoboRioSim.setVInVoltage(BatterySim.calculateDefaultBatteryLoadedVoltage(drivetrainSim.getCurrentDrawAmps()));
   }
 
   public void log(){
+    SmartDashboard.putNumber("Upating", Math.random());
+
+    SmartDashboard.putString("MotorState", currentState.name());
     SmartDashboard.putNumber("Motor Current Position (Ticks)", Hardware.Motors.left.getSelectedSensorPosition());
-    SmartDashboard.putNumber("Setpoint (Meters)", setpointMeters);
-    SmartDashboard.putNumber("Error (ticks)", metersToTicks(setpointMeters) - Hardware.Motors.left.getSelectedSensorPosition());
+    SmartDashboard.putNumber("Motor Current RPM", getWheelRPM());
+    SmartDashboard.putNumber("Desired Setpoint (Meters)", setpointMeters);
+    SmartDashboard.putNumber("Desired RPM", desiredRPM);
+    // SmartDashboard.putNumber("Error (ticks)", metersToTicks(setpointMeters) - Hardware.Motors.left.getSelectedSensorPosition());
+  }
+
+  public int MPSToTicksPer100MS(double metersPerSecond){
+    double wheelCircumference = (2 * Math.PI * Constants.Motors.wheelRadiusMeters);
+    int ticksPer100MS = (int)(metersPerSecond / 10 / wheelCircumference * Constants.Motors.ticksPerRevolution / Constants.Motors.wheelGearRatio);
+    return ticksPer100MS;
+  }
+
+  public double getWheelRPM() {
+    // return Hardware.Motors.left.getSelectedSensorVelocity();
+    return Hardware.Motors.left.getSelectedSensorVelocity() * 600 / Constants.Motors.ticksPerRevolution / Constants.Motors.wheelGearRatio;
   }
 }
