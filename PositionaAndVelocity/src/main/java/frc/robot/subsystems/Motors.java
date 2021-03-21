@@ -66,14 +66,16 @@ public class Motors extends SubsystemBase {
     Hardware.Motors.right.config_kP(0, Constants.Motors.kP);
     Hardware.Motors.right.config_kI(0, Constants.Motors.kI);
     Hardware.Motors.right.config_kD(0, Constants.Motors.kD);
+    Hardware.Motors.right.config_kF(0, Constants.Motors.kF);
 
     Hardware.Motors.left.config_kP(0, Constants.Motors.kP);
     Hardware.Motors.left.config_kI(0, Constants.Motors.kI);
     Hardware.Motors.left.config_kD(0, Constants.Motors.kD);
+    Hardware.Motors.left.config_kF(0, Constants.Motors.kF);
 
     setCurrentState(MotorState.DISABLED);
     setSetpointMeters(0);
-    setRPM(10);
+    setRPM(0);
   }
 
   public void setCurrentState(MotorState newState){
@@ -104,6 +106,7 @@ public class Motors extends SubsystemBase {
     // ControlMode.Position accepts the number of ticks to move as the parameter
     Hardware.Motors.right.set(ControlMode.Position, ticks);
     Hardware.Motors.left.set(ControlMode.Position, ticks);
+    System.out.println("ticks: "+ticks);
     drivetrainSim.setInputs(Hardware.Motors.left.getMotorOutputVoltage(), Hardware.Motors.right.getMotorOutputVoltage());
 
     // counter gravity
@@ -129,15 +132,28 @@ public class Motors extends SubsystemBase {
     System.out.println("ticksPer100MS: "+ticksPer100MS);
   }
 
+  public void temp(){
+    Hardware.Motors.right.set(ControlMode.PercentOutput, 0.5);
+    Hardware.Motors.left.set(ControlMode.PercentOutput, 0.5);
+
+    drivetrainSim.setInputs(Hardware.Motors.left.getMotorOutputVoltage(), Hardware.Motors.right.getMotorOutputVoltage());
+
+  }
+
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
     
     switch(currentState){
       case SETPOINT:
+        Hardware.Motors.right.config_kF(0, 0);
+        Hardware.Motors.left.config_kF(0, 0);
         moveToSetpoint();
         break;
       case VELOCITY:
+        Hardware.Motors.right.config_kF(0, Constants.Motors.kF);
+        Hardware.Motors.left.config_kF(0, Constants.Motors.kF);
+        // by setting the kF, output = kF * ticksPer100MS + PID
         goToVelocity();
         break;
       case DISABLED:
@@ -168,14 +184,14 @@ public class Motors extends SubsystemBase {
   }
 
   public void log(){
-    SmartDashboard.putNumber("Upating", Math.random());
 
     SmartDashboard.putString("MotorState", currentState.name());
     SmartDashboard.putNumber("Motor Current Position (Ticks)", Hardware.Motors.left.getSelectedSensorPosition());
+    SmartDashboard.putNumber("Desired Position (Ticks)", metersToTicks(setpointMeters));
+
     SmartDashboard.putNumber("Motor Current RPM", getWheelRPM());
-    SmartDashboard.putNumber("Desired Setpoint (Meters)", setpointMeters);
+    SmartDashboard.putNumber("Motor Current TicksPer100MS", rpmToTicksPer100MS(getWheelRPM()));
     SmartDashboard.putNumber("Desired RPM", desiredRPM);
-    // SmartDashboard.putNumber("Error (ticks)", metersToTicks(setpointMeters) - Hardware.Motors.left.getSelectedSensorPosition());
   }
 
   public int MPSToTicksPer100MS(double metersPerSecond){
@@ -185,7 +201,7 @@ public class Motors extends SubsystemBase {
   }
 
   public double getWheelRPM() {
-    // return Hardware.Motors.left.getSelectedSensorVelocity();
+    // return Hardware.Motors.left.getSelectedSensorVelocity(); returns the value in ticks per 100ms
     return Hardware.Motors.left.getSelectedSensorVelocity() * 600 / Constants.Motors.ticksPerRevolution / Constants.Motors.wheelGearRatio;
   }
 }

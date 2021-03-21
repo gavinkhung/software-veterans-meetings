@@ -7,11 +7,14 @@ package frc.robot;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
-import frc.robot.commands.ExampleCommand;
-import frc.robot.subsystems.ExampleSubsystem;
-import frc.robot.subsystems.Motors;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import frc.robot.commands.ExampleCommand;
+import frc.robot.commands.GoAtVelocity;
+import frc.robot.commands.MoveToPosition;
+import frc.robot.subsystems.ExampleSubsystem;
+import frc.robot.subsystems.Motors;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -25,7 +28,7 @@ public class RobotContainer {
 
   private final ExampleCommand m_autoCommand = new ExampleCommand(m_exampleSubsystem);
 
-  private static Motors motors = new Motors();
+  private final Motors motors = new Motors();
 
   private Joystick joystick;
 
@@ -44,7 +47,20 @@ public class RobotContainer {
   private void configureButtonBindings() {
     joystick = new Joystick(0);
 
-    new JoystickButton(joystick, 1).whenPressed(() -> motors.setCurrentState(Motors.MotorState.VELOCITY));
+    // new JoystickButton(joystick, 1).whenPressed(() -> motors.setCurrentState(Motors.MotorState.SETPOINT));
+    // new JoystickButton(joystick, 1).whenPressed(new GoAtVelocity(motors, 0));
+    // new JoystickButton(joystick, 2).whenPressed(new GoAtVelocity(motors, Constants.Motors.flywheelReleaseRPM));
+
+    // new JoystickButton(joystick, 3).whenPressed(new MoveToPosition(motors, 0));
+    // new JoystickButton(joystick, 4).whenPressed(new MoveToPosition(motors, Constants.Motors.setpointMiddleMeters));
+    // new JoystickButton(joystick, 5).whenPressed(new MoveToPosition(motors, Constants.Motors.setpointTopMeters));
+
+    SmartDashboard.putData("MoveToPosition Zero", new MoveToPosition(motors, 0));
+    SmartDashboard.putData("MoveToPosition Middle", new MoveToPosition(motors, Constants.Motors.setpointMiddleMeters));
+    SmartDashboard.putData("MoveToPosition Top", new MoveToPosition(motors, Constants.Motors.setpointTopMeters));
+
+    SmartDashboard.putData("SetFlywheelRPM Zero", new GoAtVelocity(motors, 0));
+    SmartDashboard.putData("SetFlywheelRPM (60 RPM)", new GoAtVelocity(motors, Constants.Motors.flywheelReleaseRPM));
   }
 
   /**

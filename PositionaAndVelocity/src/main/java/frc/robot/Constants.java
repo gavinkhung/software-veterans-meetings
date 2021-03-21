@@ -24,18 +24,26 @@ public final class Constants {
         public static double ticksPerRevolution = 4096;
 
         // pid on talon
-        public static final double kP = 0.2;
-        public static final double kI = 0.1;
-        public static final double kD = 0.1;
+        public static final double kP = 1.0;
+        public static final double kI = 0.0;
+        public static final double kD = 0.0;
+        // needed for velocity only
+        // (0.5 * 1023) / 833
+        // 0.5 means running the talon at 50% percent output
+        // 833 is the ticks per 100ms at 50% percent output
+        public static final double kF = 0.61;
 
         // used ControlMode.Position to go from meters to ticks
-        public static final double wheelRadiusMeters = 0.2;
-        public static final double wheelGearRatio = 1.0;
-        public static final double motorTicksPerRevolution = 64;
+        public static final double wheelRadiusMeters = 0.1;
+        public static final double wheelGearRatio = 2.0;
+        public static final double motorTicksPerRevolution = 4096;
 
         // setpoints
         public static final double setpointMiddleMeters = 0.5;
-        public static final double setpointTopMeters = 2;
+        public static final double setpointTopMeters = 2.5;
+        
+        // flywheel speeds
+        public static final double flywheelReleaseRPM = 60;
     }
 
 }
